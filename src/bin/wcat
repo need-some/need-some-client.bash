@@ -1,0 +1,36 @@
+#!/bin/bash
+
+ignorecert=
+useragent="NoSuchBrowser/1.0"
+
+function echo_usage() {
+	lvl="$1"
+	if [ -z "$lvl" ]; then
+		lvl=1
+	fi
+
+	echo "$(basename "$0") [--no-check-certificate] [--useragent useragent] url"
+
+	exit $lvl
+}
+
+while [ $# -gt 1 ]; do
+	if [ "$1" = "--no-check-certificate" ]; then
+		ignorecert="$1"
+	elif [ "$1" = "--useragent" ]; then
+		useragent="$2"
+		shift
+	elif [ "$1" = "--help" ]; then
+		echo_usage 0
+	else
+		echo_usage
+	fi
+	shift
+done
+
+if [ "$#" -eq 0 ]; then
+	echo_usage
+fi
+
+wget -U ${useragent} ${ignorecert} -q -O - --timeout=0 "$1"
+
