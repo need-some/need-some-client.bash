@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if [ $# -lt 2 -o $# -gt 4 ]; then
+	echo "Usage: $(basename $0) algo [size] file [sigfile|http[s]://sigurl| -s sigstring]"
+	exit 1
+fi
+
+algo=$1
+shift
+
+if [ $(echo $1 | tr -d "[0-9]" |wc -c) -gt 0 ]; then
+	if [ "${algo}" = "sha1" ]; then
+		size=40
+	else
+		size=32
+	fi
+else
+	size=$1
+	shift
+fi
+
+file="$1"
+if [ $# -ge 2 ]; then
+	sigfile="$2"
+else
+	sigfile="${file}.${algo}"
+fi
+if [ ! -f "${file}" ]; then
+	echo "${file}" does not exist
+	exit 2
+fi
+if [ "${sigfile}" = "-s" ]; then
+	sig="$3"
+	sigb="$3"
+elif [ ! -f "${sigfile}" ]; then
+	sigremote="$(wcat "${sigfile}")"
+	if [ "${sigremote}" = "" ]; then
+		echo "${sigfile}" does not exist
+		exit 2
+	fi
+	sig="$(echo "${sigremote}" | cut -c 1-${size} )"
+	l=$(echo "${sigremote}" | wc -c)
+	n=$(( $l - ${size} ))
+	sigb="$(echo "${sigremote}" | cut -c ${n}-)"
+else
+	sig="$(cat "${sigfile}" | cut -c 1-${size} )"
+	l=$(cat "${sigfile}" | wc -c)
+	n=$(( $l - ${size} ))
+	sigb="$(cat "${sigfile}" | cut -c ${n}-)"
+fi
+
+cursig="$( ${algo}sum "${file}" | cut -c 1-${size} )"
+
+if [ "${cursig}" != "${sig}" -a "${cursig}" != "${sigb}" ]; then
+	echo "CHECKSUM FAILURE ON ${file} WITH SIGNATURE $2 $3"
+	exit 99
+fi
+

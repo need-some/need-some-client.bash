@@ -1,0 +1,47 @@
+#!/bin/bash
+
+function before() {
+	mock-origpath md5sum
+}
+
+function test-signatures() {
+	@testName "test signature $1 $2 $3"
+
+	@parameters "md5" "file1" "file1.md5" true
+	@parameters "md5" "file1.cp" "file1.md5" true
+	@parameters "md5" "file1" "file1.md5.alt1" true
+	@parameters "md5" "file1" "file1.md5.alt2" true
+	@parameters "md5" "file1" "file1.md5.alt3" true
+	@parameters "md5" "file2" "file2.md5" true
+	@parameters "md5" "file1" "file2.md5" false
+	@parameters "md5" "file1" "" true
+
+	algo="$1"
+	infile="$NEEDSOME_TEST_TESTCASE_DIR/$NEEDSOME_TEST_TESTCASE.$2"
+	if [ ! -z "$3" ]; then
+		sigfile="$NEEDSOME_TEST_TESTCASE_DIR/$NEEDSOME_TEST_TESTCASE.$3"
+	fi
+	expected="$4"
+
+	result="$(if "$NEEDSOME_TESTEE" $algo $infile $sigfile 1>&2; then echo true; else echo false; fi )"
+	assert "check signature" "$expected" = "$result"
+}
+
+function test-signatures-remote() {
+	@testName "test signature remote"
+
+	algo="md5"
+	infile="$NEEDSOME_TEST_TESTCASE_DIR/$NEEDSOME_TEST_TESTCASE.file1"
+	export sigfileint="$NEEDSOME_TEST_TESTCASE_DIR/$NEEDSOME_TEST_TESTCASE.file1.md5"
+	sigfile="http://example.com/myfile"
+	expected="true"
+
+	function wcat() {
+		cat "$sigfileint"
+	}
+	export -f wcat
+
+	result="$(if "$NEEDSOME_TESTEE" $algo $infile $sigfile 1>&2; then echo true; else echo false; fi )"
+	assert "check signature" "$expected" = "$result"
+}
+
