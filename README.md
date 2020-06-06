@@ -8,7 +8,7 @@ _need-some_ is a collection of small yet useful functions.
 The client package provides commands for network access
 
 ## Installation
-See the Installation in [need-some-git.bash](https://github.com/need-some/need-some-git.bash "need-some-git.bash")
+See the Installation in [need-some-init.bash](https://github.com/need-some/need-some-init.bash "need-some-init.bash")
 
 ## Syntax
 
